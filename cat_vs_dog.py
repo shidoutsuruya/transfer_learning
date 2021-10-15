@@ -19,40 +19,29 @@ cat_test=np.random.choice(cat_files,size=50,replace=False)
 dog_train=np.random.choice(dog_files,size=150,replace=False)
 dog_val=np.random.choice(dog_files,size=50,replace=False)
 dog_test=np.random.choice(dog_files,size=50,replace=False)
+input_shape=(150,150)
 
-class Coder:
-    def __init__(self):
-        self.OneHot=OneHotEncoder(sparse=False)
-        self.LE=LabelEncoder()
-    def Encoder(self,y):
-        y=self.LE.fit_transform(y)
-        y=self.OneHot.fit_transform(y.reshape(-1,1))
-        return y
-    def Decoder(self,y):
-        y=np.argmax(y,axis=1)
-        y=self.LE.inverse_transform(y)
-        return y
-y_Coder=Coder()    
-def data_preprocessing(cat,dog):
+y_Coder=OneHotEncoder(sparse=False)    
+def data_preprocessing(cat,dog,input_shape):
     x=[]
     y=[]
     for i in cat:
         img=cv2.imread(os.path.join(root,i))
-        img=cv2.resize(img,(150,150))
+        img=cv2.resize(img,input_shape)
         x.append(img)
         y.append('cat')
     for j in dog:
         img=cv2.imread(os.path.join(root,j))
-        img=cv2.resize(img,(150,150))
+        img=cv2.resize(img,input_shape)
         x.append(img)
         y.append('dog')
     x=np.array(x)
-    y=y_Coder.Encoder(y)
+    y=y_Coder.fit_transform(np.array(y).reshape(-1,1))
     x,y=shuffle(x,y)
     return x,y
-x_train,y_train=data_preprocessing(cat_train,dog_train)
-x_val,y_val=data_preprocessing(cat_val,dog_val)
-x_test,y_test=data_preprocessing(cat_test,dog_test)
+x_train,y_train=data_preprocessing(cat_train,dog_train,input_shape)
+x_val,y_val=data_preprocessing(cat_val,dog_val,input_shape)
+x_test,y_test=data_preprocessing(cat_test,dog_test,input_shape)
 def CNN_model(input_shape,categories=10):
     model=tf.keras.Sequential([
         tf.keras.layers.Conv2D(filters=64,kernel_size=7,activation='relu',
@@ -90,9 +79,12 @@ def accurate_curve(history):
     ax2.grid()
     ax2.legend()
     plt.show()
-def model_training():
-    lrate = LearningRateScheduler(exp_decay)
-    model=CNN_model([150,150,3],2)
+def model_training(input_shape,channels=(3,)):
+    """
+    input_shape:1x2 tuple
+    channels:1x1 tuple
+    """
+    model=CNN_model(input_shape+channels,2)
     optimizer=tf.optimizers.RMSprop()
     ES=EarlyStopping(patience=20)
     LS=LearningRateScheduler(exp_decay)
