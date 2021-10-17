@@ -25,10 +25,8 @@ def load_x_and_y(data_path=data_1_path):
     return x,y_hot
 def create_model(input_shape,num_classes):
     resnet=ResNet50(weights='imagenet',include_top=False,input_shape=input_shape)
-    output=resnet.layers[-1].output
-    base_model=tf.keras.models.Model(resnet.input,output)
     model=tf.keras.Sequential([
-        base_model,
+        resnet,
         tf.keras.layers.Dense(512,activation='relu'),
         tf.keras.layers.Dense(512,activation='relu'),
         tf.keras.layers.Dense(num_classes,activation='softmax')
