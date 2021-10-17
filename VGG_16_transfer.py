@@ -1,8 +1,9 @@
+import matplotlib.pyplot as plt
 from tensorflow.keras.applications import vgg16
 from tensorflow.keras.models import Model
 import tensorflow as tf
 import numpy as np
-from cat_vs_dog import x_train,x_val,y_train,y_val,accurate_curve
+from cat_vs_dog import x_train,x_val,y_train,y_val,accurate_curve,y_Coder
 from tensorflow.keras.callbacks import EarlyStopping,LearningRateScheduler
 import cv2
 import os
@@ -64,10 +65,7 @@ def VGG_inherit_model_training(input_shape=input_shape):
 take pictures into VGG_model to get flatten layer,which
 is the features of the pictures.
 """
-
-VGG_inherit_model_training()
-
-def tranfer_model_predict(x_pred_dirpath,resize=input_shape[:2],y_gold=None):
+def load_data(x_pred_dirpath,resize=input_shape[:2]):
     """
     x_pred_path:directory
     """
@@ -82,8 +80,36 @@ def tranfer_model_predict(x_pred_dirpath,resize=input_shape[:2],y_gold=None):
         img=cv2.resize(img,resize)
         x_test.append(img)
     x_test=np.array(x_test)
+    return x_pred_list,x_test
+def tranfer_model_predict(model_path='VGG_inherit.h5',y_gold=None):
+    x_list,x_test=load_data('test_data')
     """
     load model to predict.
     """
+    model=tf.keras.models.load_model(model_path)
+    y_pred_onehot=model.predict(x_test)
+    y_pred=y_Coder.inverse_transform(y_pred_onehot)
+    dic={}
+    for i,j in zip(x_list,y_pred.tolist()):
+        dic[i]=j
+    return dic
+def draw_img(x_pred,n):
+    fig=plt.figure('hello')
+    for i in range(1,n+1):
+        ax=fig.add_subplot(int(pow(n,0.5)),int(pow(n,0.5)+1),i)
+        ax.imshow(x_pred[0][0,:,:,i],cmap='bone')
+        ax.set_xticks([])
+        ax.set_yticks([])
+    plt.show()
+def see_the_black_box(model_path='VGG_inherit.h5',y_gold=None):
+    x_list,x_test=load_data('test_data')
+    model=tf.keras.models.load_model(model_path)
+    layer_outputs=[layer.output for layer in model.layers[0].layers[1:9]]
+    slice_model=Model(inputs=model.layers[0].layers[1].input,outputs=layer_outputs)  
+    x_pred=slice_model.predict(x_test)
+    draw_img(x_pred,55)
+
     
-        
+if __name__ == '__main__':
+    #VGG_inherit_model_training() #training model
+    see_the_black_box()
