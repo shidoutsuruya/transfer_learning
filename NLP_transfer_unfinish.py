@@ -49,5 +49,4 @@ similar_word={search_term:[item[0] for item in w2v_model.wv.most_similar([search
 u=pd.DataFrame(similar_word).transpose()
 print(u)
 """
-u=data_preprocess(['hello world','this is my room'])
-print(u)
+negative_seq=data_preprocess(negative_data)
